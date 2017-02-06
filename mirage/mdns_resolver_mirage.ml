@@ -84,7 +84,7 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
     try
       Hashtbl.find res endp
     with Not_found ->
-      let timerfn () = Time.sleep_ns (Duration.of_sec 5) in
+      let timerfn () = Time.sleep 5.0 in
       let mvar = Lwt_mvar.create_empty () in
       let src_port = default_port in
       let callback ~src ~dst ~src_port buf =
@@ -100,9 +100,7 @@ module Make(Time:V1_LWT.TIME)(S:V1_LWT.STACKV4) = struct
       S.listen_udpv4 s ~port:src_port callback;
       let rec txfn buf =
         Cstruct.of_bigarray buf |>
-        S.UDPV4.write ~src_port ~dst ~dst_port udp >>= function
-        | Error (`Msg s) -> fail (Failure ("Attempting to communicate with remote resolver: " ^ s))
-        | Ok () -> Lwt.return_unit
+        S.UDPV4.write ~source_port:src_port ~dest_ip:dst ~dest_port:dst_port udp
       in
       let rec rxfn f =
         Lwt_mvar.take mvar
